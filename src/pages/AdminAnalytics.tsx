@@ -122,7 +122,7 @@ const AdminAnalytics = () => {
     const [retention, setRetention] = useState<any[]>([]);
     const [platformHealth, setPlatformHealth] = useState<any[]>([]);
     const [supplyDemand, setSupplyDemand] = useState<any[]>([]);
-    const [sessionStats, setSessionStats] = useState<any>(null);
+
     const [walletStats, setWalletStats] = useState<WalletStats | null>(null);
     const [topPerformers, setTopPerformers] = useState<any[]>([]);
 
@@ -141,7 +141,7 @@ const AdminAnalytics = () => {
                 retentionRes,
                 healthRes,
                 supplyRes,
-                sessionRes,
+                // sessionRes removed
                 walletRes,
                 performersRes,
             ] = await Promise.all([
@@ -153,7 +153,7 @@ const AdminAnalytics = () => {
                 client.get('/analytics/retention').catch(() => ({ data: [] })),
                 client.get('/analytics/platform-health').catch(() => ({ data: [] })),
                 client.get('/analytics/supply-demand').catch(() => ({ data: [] })),
-                client.get('/analytics/sessions/stats').catch(() => ({ data: null })),
+                // client.get('/analytics/sessions/stats').catch(() => ({ data: null })),
                 client.get('/analytics/wallet/stats').catch(() => ({ data: null })),
                 client.get('/analytics/user-performance?limit=5').catch(() => ({ data: [] })),
             ]);
@@ -166,7 +166,7 @@ const AdminAnalytics = () => {
             setRetention(retentionRes.data?.data || retentionRes.data || []);
             setPlatformHealth(healthRes.data?.data || healthRes.data || []);
             setSupplyDemand(supplyRes.data?.data || supplyRes.data || []);
-            setSessionStats(sessionRes.data?.data || sessionRes.data);
+            // setSessionStats(sessionRes.data?.data || sessionRes.data);
             setWalletStats(walletRes.data?.data || walletRes.data);
             setTopPerformers(performersRes.data?.data || performersRes.data || []);
 
@@ -476,7 +476,7 @@ const AdminAnalytics = () => {
                                     outerRadius={70}
                                     paddingAngle={5}
                                     dataKey="value"
-                                    label={({ name, percentage }) => `${name}: ${percentage}%`}
+                                    label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
                                     labelLine={false}
                                 >
                                     {retention.map((_, index) => (
@@ -536,9 +536,9 @@ const AdminAnalytics = () => {
                                 <div key={i} className="flex justify-between items-center p-3 bg-background rounded-lg border border-border">
                                     <div className="flex items-center gap-3">
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${i === 0 ? 'bg-yellow-100 text-yellow-600' :
-                                                i === 1 ? 'bg-gray-100 text-gray-600' :
-                                                    i === 2 ? 'bg-orange-100 text-orange-600' :
-                                                        'bg-blue-100 text-blue-600'
+                                            i === 1 ? 'bg-gray-100 text-gray-600' :
+                                                i === 2 ? 'bg-orange-100 text-orange-600' :
+                                                    'bg-blue-100 text-blue-600'
                                             }`}>
                                             #{i + 1}
                                         </div>

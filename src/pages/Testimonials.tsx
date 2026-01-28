@@ -1,12 +1,11 @@
+
 import client from '@/api/client';
-import { useAuth } from '@/auth/useAuth';
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 const Testimonials = () => {
-    const { user } = useAuth();
     const [reviews, setReviews] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -31,12 +30,12 @@ const Testimonials = () => {
     const toggleVisibility = async (reviewId: string) => {
         try {
             await client.patch(`/profile/reviews/${reviewId}/toggle-visibility`);
-            
+
             // Update local state by toggling the isHidden flag
-            setReviews(reviews.map(r => 
+            setReviews(reviews.map(r =>
                 r.id === reviewId ? { ...r, isHidden: !r.isHidden } : r
             ));
-            
+
             // Show appropriate message based on new state
             const review = reviews.find(r => r.id === reviewId);
             if (review) {
@@ -66,9 +65,9 @@ const Testimonials = () => {
                 <StatCard label="Total Reviews" value={reviews.length} />
                 <StatCard label="Visible" value={visibleReviews.length} />
                 <StatCard label="Hidden" value={hiddenReviews.length} />
-                <StatCard 
-                    label="Average Rating" 
-                    value={reviews.length > 0 
+                <StatCard
+                    label="Average Rating"
+                    value={reviews.length > 0
                         ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
                         : '0.0'
                     }

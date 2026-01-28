@@ -6,7 +6,7 @@ import client from '../api/client';
 import { useAuth } from '../auth/useAuth';
 
 // Color Palette
-const COLORS = ['#C9A24D', '#0F172A', '#64748B', '#10B981', '#EF4444']; // Gold, Navy, Slate, Green, Red
+
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -14,19 +14,12 @@ const Dashboard = () => {
     const [summary, setSummary] = useState({ users: 0, revenue: 0, sessions: 0 });
     const [sessionStats, setSessionStats] = useState({ active: 0, completed: 0, cancelled: 0 });
     const [userCounts, setUserCounts] = useState({ psychologists: 0, patients: 0 });
-    
+
     const [graphData, setGraphData] = useState<any[]>([]);
     const [topUsers, setTopUsers] = useState<any[]>([]);
-    const [retention, setRetention] = useState<any[]>([
-        { name: 'One-Time', value: 0, percentage: 0 },
-        { name: 'Returning', value: 0, percentage: 0 },
-        { name: 'Loyal', value: 0, percentage: 0 }
-    ]);
-    const [supplyDemand, setSupplyDemand] = useState<any[]>([]);
-    const [platformHealth, setPlatformHealth] = useState<any[]>([]);
     const [pendingPsychologists, setPendingPsychologists] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+
 
     useEffect(() => {
         loadData();
@@ -34,8 +27,8 @@ const Dashboard = () => {
 
     const loadData = async () => {
         try {
-            setError(null);
-            
+
+
             // 1. Fetch Summary
             try {
                 const sumRes = await client.get('/analytics/summary');
@@ -66,7 +59,7 @@ const Dashboard = () => {
                 if (Array.isArray(users)) {
                     const psychs = users.filter((u: any) => u.role === 'PSYCHOLOGIST');
                     const patients = users.filter((u: any) => u.role === 'PATIENT');
-                    
+
                     setUserCounts({
                         psychologists: psychs.length,
                         patients: patients.length
@@ -79,23 +72,23 @@ const Dashboard = () => {
             }
 
             // 4. Fetch Graph Data
-             try {
+            try {
                 const graphRes = await client.get('/analytics/activity-graph');
                 setGraphData(graphRes.data.data || graphRes.data || []);
             } catch (e) { setGraphData([]); }
 
-             // 5. Fetch Top Users
+            // 5. Fetch Top Users
             try {
                 const perfRes = await client.get('/analytics/user-performance');
                 setTopUsers(perfRes.data.data || perfRes.data || []);
             } catch (e) { setTopUsers([]); }
-            
-             // 6. Retention & Supply/Demand (Keeping simplified or existing if available, else defaults)
-             // ... defaults initialized in state
+
+            // 6. Retention & Supply/Demand (Keeping simplified or existing if available, else defaults)
+            // ... defaults initialized in state
 
         } catch (err: any) {
             console.error("Failed to load dashboard data", err);
-            setError(err.message || 'Failed to load data');
+            console.error("Failed to load dashboard data", err);
         } finally {
             setLoading(false);
         }
@@ -129,30 +122,30 @@ const Dashboard = () => {
             {/* 1. Key Metrics (Interactive) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div onClick={() => navigate('/user-breakdown')} className="cursor-pointer transition-transform hover:scale-[1.02]">
-                    <StatCard 
-                        icon={<Users size={24} />} 
-                        iconBg="bg-blue-100 text-blue-600" 
-                        label="Total Users" 
-                        value={summary.users} 
-                        sub="Tap for Breakdown" 
+                    <StatCard
+                        icon={<Users size={24} />}
+                        iconBg="bg-blue-100 text-blue-600"
+                        label="Total Users"
+                        value={summary.users}
+                        sub="Tap for Breakdown"
                     />
                 </div>
                 <div className="cursor-default">
-                    <StatCard 
-                        icon={<Activity size={24} />} 
-                        iconBg="bg-purple-100 text-purple-600" 
-                        label="Total Sessions" 
-                        value={summary.sessions} 
-                        sub="Lifetime Count" 
+                    <StatCard
+                        icon={<Activity size={24} />}
+                        iconBg="bg-purple-100 text-purple-600"
+                        label="Total Sessions"
+                        value={summary.sessions}
+                        sub="Lifetime Count"
                     />
                 </div>
                 <div onClick={() => navigate('/financials')} className="cursor-pointer transition-transform hover:scale-[1.02]">
-                    <StatCard 
-                        icon={<DollarSign size={24} />} 
-                        iconBg="bg-green-100 text-green-600" 
-                        label="Total Revenue" 
-                        value={`$${summary.revenue.toLocaleString()}`} 
-                        sub="Tap for Financials" 
+                    <StatCard
+                        icon={<DollarSign size={24} />}
+                        iconBg="bg-green-100 text-green-600"
+                        label="Total Revenue"
+                        value={`$${summary.revenue.toLocaleString()}`}
+                        sub="Tap for Financials"
                     />
                 </div>
             </div>
@@ -161,26 +154,26 @@ const Dashboard = () => {
             <div>
                 <h2 className="text-xl font-bold text-text mb-4">Session Report</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <StatCard 
-                        icon={<Clock size={24} />} 
-                        iconBg="bg-orange-100 text-orange-600" 
-                        label="Active Sessions" 
-                        value={sessionStats.active} 
-                        sub="Live / Upcoming" 
+                    <StatCard
+                        icon={<Clock size={24} />}
+                        iconBg="bg-orange-100 text-orange-600"
+                        label="Active Sessions"
+                        value={sessionStats.active}
+                        sub="Live / Upcoming"
                     />
-                    <StatCard 
-                        icon={<CheckCircle size={24} />} 
-                        iconBg="bg-emerald-100 text-emerald-600" 
-                        label="Completed Sessions" 
-                        value={sessionStats.completed} 
-                        sub="Finished Successfully" 
+                    <StatCard
+                        icon={<CheckCircle size={24} />}
+                        iconBg="bg-emerald-100 text-emerald-600"
+                        label="Completed Sessions"
+                        value={sessionStats.completed}
+                        sub="Finished Successfully"
                     />
-                    <StatCard 
-                        icon={<XCircle size={24} />} 
-                        iconBg="bg-red-100 text-red-600" 
-                        label="Cancelled Sessions" 
-                        value={sessionStats.cancelled} 
-                        sub="Cancelled / No-show" 
+                    <StatCard
+                        icon={<XCircle size={24} />}
+                        iconBg="bg-red-100 text-red-600"
+                        label="Cancelled Sessions"
+                        value={sessionStats.cancelled}
+                        sub="Cancelled / No-show"
                     />
                 </div>
             </div>
@@ -189,19 +182,19 @@ const Dashboard = () => {
             <div>
                 <h2 className="text-xl font-bold text-text mb-4">Revenue Insights</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <StatCard 
-                        icon={<User size={24} />} 
-                        iconBg="bg-indigo-100 text-indigo-600" 
-                        label="Avg. Revenue per Patient" 
-                        value={`$${avgRevPerPatient}`} 
-                        sub={`Across ${userCounts.patients} Patients`} 
+                    <StatCard
+                        icon={<User size={24} />}
+                        iconBg="bg-indigo-100 text-indigo-600"
+                        label="Avg. Revenue per Patient"
+                        value={`$${avgRevPerPatient}`}
+                        sub={`Across ${userCounts.patients} Patients`}
                     />
-                    <StatCard 
-                        icon={<TrendingUp size={24} />} 
-                        iconBg="bg-teal-100 text-teal-600" 
-                        label="Avg. Revenue per Psychologist" 
-                        value={`$${avgRevPerPsych}`} 
-                        sub={`Across ${userCounts.psychologists} Psychologists`} 
+                    <StatCard
+                        icon={<TrendingUp size={24} />}
+                        iconBg="bg-teal-100 text-teal-600"
+                        label="Avg. Revenue per Psychologist"
+                        value={`$${avgRevPerPsych}`}
+                        sub={`Across ${userCounts.psychologists} Psychologists`}
                     />
                 </div>
             </div>
@@ -211,7 +204,7 @@ const Dashboard = () => {
                 <div className="bg-surface p-6 rounded-xl border border-border shadow-sm">
                     <h3 className="font-bold text-lg mb-4 text-text">Activity Trends</h3>
                     <div className="h-64">
-                         <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={graphData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                                 <XAxis dataKey="date" stroke="#64748B" fontSize={12} />

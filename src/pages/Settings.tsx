@@ -24,7 +24,7 @@ const Settings = () => {
     useEffect(() => {
         // Load settings if needed
         if (user) {
-           loadSettings();
+            loadSettings();
         }
     }, [user]);
 
@@ -43,24 +43,7 @@ const Settings = () => {
         }
     };
 
-    const handleSave = async () => {
-        try {
-            await client.patch('/profile', {
-                // Only sending preferences
-                notificationPreferences: {
-                    email: notificationParams.email,
-                    push: notificationParams.push,
-                    payment: notificationParams.payment,
-                },
-                theme: preferences.theme,
-                sessionTimeout: parseInt(preferences.sessionTimeout),
-            });
-            toast.success('Settings updated successfully!');
-        } catch (error) {
-            console.error('Failed to update settings:', error);
-            toast.error('Failed to update settings');
-        }
-    };
+
 
     return (
         <div>
@@ -80,7 +63,7 @@ const Settings = () => {
                             <p className="text-sm text-blue-700">Manage your personal details on the Profile page.</p>
                         </div>
                     </div>
-                    <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100" onClick={() => window.location.href='/profile'}>
+                    <Button variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100" onClick={() => window.location.href = '/profile'}>
                         Go to Profile
                     </Button>
                 </div>
@@ -93,29 +76,29 @@ const Settings = () => {
                     <div className="space-y-3">
                         <label className="flex items-center justify-between cursor-pointer">
                             <span className="text-text">Email Notifications</span>
-                            <input 
-                                type="checkbox" 
-                                className="w-5 h-5 cursor-pointer" 
+                            <input
+                                type="checkbox"
+                                className="w-5 h-5 cursor-pointer"
                                 checked={notificationParams.email}
-                                onChange={(e) => setNotificationParams({...notificationParams, email: e.target.checked})}
+                                onChange={(e) => setNotificationParams({ ...notificationParams, email: e.target.checked })}
                             />
                         </label>
                         <label className="flex items-center justify-between cursor-pointer">
                             <span className="text-text">Push Notifications</span>
-                            <input 
-                                type="checkbox" 
-                                className="w-5 h-5 cursor-pointer" 
+                            <input
+                                type="checkbox"
+                                className="w-5 h-5 cursor-pointer"
                                 checked={notificationParams.push}
-                                onChange={(e) => setNotificationParams({...notificationParams, push: e.target.checked})}
+                                onChange={(e) => setNotificationParams({ ...notificationParams, push: e.target.checked })}
                             />
                         </label>
                         <label className="flex items-center justify-between cursor-pointer">
                             <span className="text-text">Payment Updates</span>
-                            <input 
-                                type="checkbox" 
-                                className="w-5 h-5 cursor-pointer" 
+                            <input
+                                type="checkbox"
+                                className="w-5 h-5 cursor-pointer"
                                 checked={notificationParams.payment}
-                                onChange={(e) => setNotificationParams({...notificationParams, payment: e.target.checked})}
+                                onChange={(e) => setNotificationParams({ ...notificationParams, payment: e.target.checked })}
                             />
                         </label>
                     </div>
@@ -128,22 +111,22 @@ const Settings = () => {
                         <h3 className="text-lg font-semibold text-text">Privacy & Security</h3>
                     </div>
                     <div className="space-y-3">
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             className="w-full justify-start"
                             onClick={() => setPasswordModalOpen(true)}
                         >
                             Change Password
                         </Button>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             className="w-full justify-start"
                             onClick={() => toast.info('Two-factor authentication coming soon!')}
                         >
                             Two-Factor Authentication
                         </Button>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             className="w-full justify-start text-red-400"
                             onClick={() => toast.warning('Account deletion requires admin approval')}
                         >
@@ -161,7 +144,7 @@ const Settings = () => {
                     <div className="space-y-4">
                         <div>
                             <label className="text-sm font-medium text-text block mb-2">Theme</label>
-                            <select 
+                            <select
                                 className="w-full px-4 py-2 rounded-lg border border-border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary"
                                 value={preferences.theme}
                                 onChange={(e) => setPreferences({ ...preferences, theme: e.target.value })}
@@ -173,7 +156,7 @@ const Settings = () => {
                         </div>
                         <div>
                             <label className="text-sm font-medium text-text block mb-2">Session Timeout (Minutes)</label>
-                            <select 
+                            <select
                                 className="w-full px-4 py-2 rounded-lg border border-border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary"
                                 value={preferences.sessionTimeout}
                                 onChange={(e) => setPreferences({ ...preferences, sessionTimeout: e.target.value })}
@@ -187,10 +170,10 @@ const Settings = () => {
                     </div>
                 </div>
             </div>
-            
-            <PasswordChangeModal 
-                open={passwordModalOpen} 
-                onClose={() => setPasswordModalOpen(false)} 
+
+            <PasswordChangeModal
+                open={passwordModalOpen}
+                onClose={() => setPasswordModalOpen(false)}
             />
         </div>
     );
