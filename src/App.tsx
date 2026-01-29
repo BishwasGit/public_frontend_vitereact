@@ -46,6 +46,7 @@ import Settings from './pages/Settings';
 import TransactionHistory from './pages/TransactionHistory';
 import Wallet from './pages/Wallet';
 import AddFunds from './pages/AddFunds';
+import EsewaSuccess from './pages/EsewaSuccess';
 import WithdrawFunds from './pages/WithdrawFunds';
 
 
@@ -132,6 +133,7 @@ function AppRoutes() {
                  <Route path="messages" element={<Messages />} />
                  <Route path="wallet" element={<Wallet />} />
                  <Route path="add-funds" element={<AddFunds />} />
+                 <Route path="esewa/success" element={<EsewaSuccess />} />
                  <Route path="withdraw-funds" element={<WithdrawFunds />} />
                  <Route path="balance-statement" element={<BalanceStatement />} />
                  <Route path="transaction-history" element={<TransactionHistory />} />
