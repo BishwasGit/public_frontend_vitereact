@@ -1,196 +1,156 @@
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { AuthProvider } from './auth/AuthContext';
+import { useAuth } from './auth/useAuth';
+import Layout from './layout/Layout';
 
-import { AuthContext, AuthProvider } from './src/context/AuthContext';
+// Pages
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import RoleBasedDashboard from './pages/RoleBasedDashboard';
 
-// Screens
-import BookSessionScreen from './src/screens/BookSessionScreen';
-import ChatScreen from './src/screens/ChatScreen';
-import CreateSessionScreen from './src/screens/CreateSessionScreen';
-import EarningsScreen from './src/screens/EarningsScreen';
-import FindPsychologistScreen from './src/screens/FindPsychologistScreen';
-import GalleryScreen from './src/screens/GalleryScreen';
-import LoginScreen from './src/screens/LoginScreen';
-import MessagesScreen from './src/screens/MessagesScreen';
-import MyProfileScreen from './src/screens/MyProfileScreen';
-import MyServicesScreen from './src/screens/MyServicesScreen';
-import MySessionsScreen from './src/screens/MySessionsScreen';
-import PatientDashboard from './src/screens/PatientDashboard';
-import PsychologistDashboard from './src/screens/PsychologistDashboard';
-import PsychologistProfileScreen from './src/screens/PsychologistProfileScreen';
-import RegisterScreen from './src/screens/RegisterScreen';
-import SessionDetailScreen from './src/screens/SessionDetailScreen';
-import SessionRequestsScreen from './src/screens/SessionRequestsScreen';
-import SessionScreen from './src/screens/SessionScreen';
+// Admin Pages
+import AdminAnalytics from './pages/AdminAnalytics';
+import AuditLogs from './pages/AuditLogs';
+import Disputes from './pages/Disputes';
+import DisputeView from './pages/DisputeView';
+import Financials from './pages/Financials';
+import LedgerBalances from './pages/LedgerBalances';
+import Payables from './pages/Payables';
+import SessionView from './pages/SessionView'; // Sessions list for Admin? Or general? 
+import Sessions from './pages/Sessions'; // General Sessions
+import UserBreakdown from './pages/UserBreakdown';
+import Users from './pages/Users';
+import WalletLedger from './pages/WalletLedger';
+import WithdrawalRequests from './pages/WithdrawalRequests';
+
+// Patient Pages
+import FindPsychologist from './pages/FindPsychologist';
+import MyServices from './pages/MyServices'; // Actually Psychologist
+import BookSession from './pages/BookSession';
+import SessionRoom from './pages/SessionRoom';
+
+// Psychologist Pages
+import Earnings from './pages/Earnings';
+import Gallery from './pages/Gallery';
+import MyPatients from './pages/MyPatients';
+import PsychologistProfile from './pages/PsychologistProfile'; // Public profile? Or own?
+import Schedule from './pages/Schedule';
+import Testimonials from './pages/Testimonials';
+
+// Shared Pages
+import BalanceStatement from './pages/BalanceStatement';
+import Messages from './pages/Messages';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
+import TransactionHistory from './pages/TransactionHistory';
+import Wallet from './pages/Wallet';
+import AddFunds from './pages/AddFunds';
+import WithdrawFunds from './pages/WithdrawFunds';
 
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+    const { user, isLoading } = useAuth();
+    const location = useLocation();
 
-const Stack = createNativeStackNavigator();
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
 
-function Navigation() {
-  const { isAuthenticated, isLoading, user } = React.useContext(AuthContext);
+    if (!user) {
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
-    );
-  }
-
-  return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: '#2563eb',
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-        }}
-      >
-        {!isAuthenticated ? (
-          <>
-            <Stack.Screen
-              name="Login"
-              component={LoginScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="Register"
-              component={RegisterScreen}
-              options={{ headerShown: false }}
-            />
-          </>
-        ) : (
-          <>
-            {user?.role === 'PSYCHOLOGIST' ? (
-              <>
-                <Stack.Screen
-                  name="PsychologistDashboard"
-                  component={PsychologistDashboard}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="MySessions"
-                  component={MySessionsScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="SessionDetail"
-                  component={SessionDetailScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="MyProfile"
-                  component={MyProfileScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="MyServices"
-                  component={MyServicesScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="Earnings"
-                  component={EarningsScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="Gallery"
-                  component={GalleryScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="CreateSession"
-                  component={CreateSessionScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="SessionRequests"
-                  component={SessionRequestsScreen}
-                  options={{ headerShown: false }}
-                />
-              </>
-            ) : (
-              <>
-                <Stack.Screen
-                  name="PatientDashboard"
-                  component={PatientDashboard}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="FindPsychologist"
-                  component={FindPsychologistScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="PsychologistProfile"
-                  component={PsychologistProfileScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="BookSession"
-                  component={BookSessionScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="MySessions"
-                  component={MySessionsScreen}
-                  options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                  name="Gallery"
-                  component={GalleryScreen}
-                  options={{ headerShown: false }}
-                />
-              </>
-            )}
-            <Stack.Screen
-              name="Messages"
-              component={MessagesScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="Chat"
-              component={ChatScreen}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen
-              name="Session"
-              component={SessionScreen}
-              options={{ headerShown: false }}
-            />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
+    return children;
 }
 
+function PublicRoute({ children }: { children: React.ReactNode }) {
+    const { user, isLoading } = useAuth();
+
+    if (isLoading) {
+         return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    if (user) {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return children;
+}
+
+
+function AppRoutes() {
+    return (
+        <Routes>
+            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+            <Route path="/register" element={<Navigate to="/signup" replace />} />
+
+            {/* Protected Routes */}
+            <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                 <Route index element={<Navigate to="/dashboard" replace />} />
+                 <Route path="dashboard" element={<RoleBasedDashboard />} />
+                 
+                 {/* Admin Routes */}
+                 <Route path="admin-analytics" element={<AdminAnalytics />} />
+                 <Route path="users" element={<Users />} />
+                 <Route path="audit-logs" element={<AuditLogs />} />
+                 <Route path="withdrawal-requests" element={<WithdrawalRequests />} />
+                 <Route path="wallet-ledger" element={<WalletLedger />} />
+                 <Route path="payables" element={<Payables />} />
+                 <Route path="ledger-balances" element={<LedgerBalances />} />
+                 <Route path="disputes" element={<Disputes />} />
+                 <Route path="disputes/:id" element={<DisputeView />} />
+                 <Route path="financials" element={<Financials />} />
+                 <Route path="user-breakdown" element={<UserBreakdown />} />
+
+                 {/* Patient Routes */}
+                 <Route path="find-psychologist" element={<FindPsychologist />} />
+                 <Route path="book-session/:psychologistId" element={<BookSession />} />
+                 
+                 {/* Psychologist Routes */}
+                 <Route path="schedule" element={<Schedule />} />
+                 <Route path="my-services" element={<MyServices />} />
+                 <Route path="my-patients" element={<MyPatients />} />
+                 <Route path="earnings" element={<Earnings />} />
+                 <Route path="testimonials" element={<Testimonials />} />
+                 <Route path="gallery" element={<Gallery />} />
+                 <Route path="psychologist-profile" element={<PsychologistProfile />} /> 
+
+                 {/* Shared Routes */}
+                 <Route path="sessions" element={<Sessions />} />
+                 <Route path="sessions/:id" element={<SessionView />} />
+                 <Route path="session-room/:sessionId" element={<SessionRoom />} /> 
+                 <Route path="messages" element={<Messages />} />
+                 <Route path="wallet" element={<Wallet />} />
+                 <Route path="add-funds" element={<AddFunds />} />
+                 <Route path="withdraw-funds" element={<WithdrawFunds />} />
+                 <Route path="balance-statement" element={<BalanceStatement />} />
+                 <Route path="transaction-history" element={<TransactionHistory />} />
+                 <Route path="profile" element={<Profile />} />
+                 <Route path="settings" element={<Settings />} />
+
+            </Route>
+            
+            <Route path="*" element={<Navigate to="/dashboard" />} />
+        </Routes>
+    );
+}
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Navigation />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#374151',
-  },
-});
