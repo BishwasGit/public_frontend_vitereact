@@ -14,6 +14,7 @@ const EsewaSuccess = () => {
     useEffect(() => {
         const verify = async () => {
             const dataParam = searchParams.get('data');
+            const redirectUrl = searchParams.get('redirect');
 
             if (!dataParam) {
                 setStatus('failed');
@@ -25,10 +26,23 @@ const EsewaSuccess = () => {
                 await verifyEsewaPayment({ data: dataParam });
                 setStatus('success');
                 setMessage('Payment verified successfully! Your wallet has been updated.');
+                
+                // Handle Deep Link Redirect (Mobile)
+                if (redirectUrl) {
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 2000); // 2 second delay to show success message
+                }
+                
             } catch (error: any) {
                 console.error(error);
                 setStatus('failed');
                 setMessage(error.response?.data?.message || 'Payment verification failed.');
+                
+                // Even on failure, if we have a redirect (maybe to a failure screen app-side), consider using it?
+                // For now, let's keep user on web for error details, but maybe redirect to mobile failure if specific params passed?
+                // Usually logic: Success -> Redirect. Failure -> Stay or Redirect to Failure Deep Link.
+                // Since this is Success page logic, we only redirect on success.
             }
         };
 

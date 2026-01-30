@@ -5,6 +5,16 @@ import { PageHeader } from '@/components/common';
 
 const EsewaFailure = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    
+    useEffect(() => {
+        const redirectUrl = searchParams.get('redirect');
+        if (redirectUrl) {
+            setTimeout(() => {
+                window.location.href = redirectUrl;
+            }, 3000); // 3 seconds to see error
+        }
+    }, [searchParams]);
 
     return (
         <div className="max-w-md mx-auto text-center">
