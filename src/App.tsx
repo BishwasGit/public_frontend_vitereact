@@ -50,6 +50,7 @@ import EsewaSuccess from './pages/EsewaSuccess';
 import EsewaFailure from './pages/EsewaFailure';
 import EsewaRedirect from './pages/EsewaRedirect';
 import WithdrawFunds from './pages/WithdrawFunds';
+import PaymentMethods from './pages/PaymentMethods';
 
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -75,7 +76,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     const { user, isLoading } = useAuth();
 
     if (isLoading) {
-         return (
+        return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
@@ -99,64 +100,65 @@ function AppRoutes() {
 
             {/* Protected Routes */}
             <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                 <Route index element={<Navigate to="/dashboard" replace />} />
-                 <Route path="dashboard" element={<RoleBasedDashboard />} />
-                 
-                 {/* Admin Routes */}
-                 <Route path="admin-analytics" element={<AdminAnalytics />} />
-                 <Route path="users" element={<Users />} />
-                 <Route path="audit-logs" element={<AuditLogs />} />
-                 <Route path="withdrawal-requests" element={<WithdrawalRequests />} />
-                 <Route path="wallet-ledger" element={<WalletLedger />} />
-                 <Route path="payables" element={<Payables />} />
-                 <Route path="ledger-balances" element={<LedgerBalances />} />
-                 <Route path="disputes" element={<Disputes />} />
-                 <Route path="disputes/:id" element={<DisputeView />} />
-                 <Route path="financials" element={<Financials />} />
-                 <Route path="user-breakdown" element={<UserBreakdown />} />
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<RoleBasedDashboard />} />
 
-                 {/* Patient Routes */}
-                 <Route path="find-psychologist" element={<FindPsychologist />} />
-                 <Route path="book-session/:psychologistId" element={<BookSession />} />
-                 
-                 {/* Psychologist Routes */}
-                 <Route path="schedule" element={<Schedule />} />
-                 <Route path="my-services" element={<MyServices />} />
-                 <Route path="my-patients" element={<MyPatients />} />
-                 <Route path="earnings" element={<Earnings />} />
-                 <Route path="testimonials" element={<Testimonials />} />
-                 <Route path="gallery" element={<Gallery />} />
-                 <Route path="psychologist-profile" element={<PsychologistProfile />} /> 
+                {/* Admin Routes */}
+                <Route path="admin-analytics" element={<AdminAnalytics />} />
+                <Route path="users" element={<Users />} />
+                <Route path="audit-logs" element={<AuditLogs />} />
+                <Route path="withdrawal-requests" element={<WithdrawalRequests />} />
+                <Route path="wallet-ledger" element={<WalletLedger />} />
+                <Route path="payables" element={<Payables />} />
+                <Route path="ledger-balances" element={<LedgerBalances />} />
+                <Route path="disputes" element={<Disputes />} />
+                <Route path="disputes/:id" element={<DisputeView />} />
+                <Route path="financials" element={<Financials />} />
+                <Route path="user-breakdown" element={<UserBreakdown />} />
 
-                 {/* Shared Routes */}
-                 <Route path="sessions" element={<Sessions />} />
-                 <Route path="sessions/:id" element={<SessionView />} />
-                 <Route path="session-room/:sessionId" element={<SessionRoom />} /> 
-                 <Route path="messages" element={<Messages />} />
-                 <Route path="wallet" element={<Wallet />} />
-                 <Route path="add-funds" element={<AddFunds />} />
-                 <Route path="esewa/success" element={<EsewaSuccess />} />
-                 <Route path="esewa/failure" element={<EsewaFailure />} />
-                 <Route path="esewa/pay-redirect" element={<EsewaRedirect />} />
-                 <Route path="withdraw-funds" element={<WithdrawFunds />} />
-                 <Route path="balance-statement" element={<BalanceStatement />} />
-                 <Route path="transaction-history" element={<TransactionHistory />} />
-                 <Route path="profile" element={<Profile />} />
-                 <Route path="settings" element={<Settings />} />
+                {/* Patient Routes */}
+                <Route path="find-psychologist" element={<FindPsychologist />} />
+                <Route path="book-session/:psychologistId" element={<BookSession />} />
+
+                {/* Psychologist Routes */}
+                <Route path="schedule" element={<Schedule />} />
+                <Route path="my-services" element={<MyServices />} />
+                <Route path="my-patients" element={<MyPatients />} />
+                <Route path="earnings" element={<Earnings />} />
+                <Route path="testimonials" element={<Testimonials />} />
+                <Route path="gallery" element={<Gallery />} />
+                <Route path="psychologist-profile" element={<PsychologistProfile />} />
+
+                {/* Shared Routes */}
+                <Route path="sessions" element={<Sessions />} />
+                <Route path="sessions/:id" element={<SessionView />} />
+                <Route path="session-room/:sessionId" element={<SessionRoom />} />
+                <Route path="messages" element={<Messages />} />
+                <Route path="wallet" element={<Wallet />} />
+                <Route path="add-funds" element={<AddFunds />} />
+                <Route path="esewa/success" element={<EsewaSuccess />} />
+                <Route path="esewa/failure" element={<EsewaFailure />} />
+                <Route path="esewa/pay-redirect" element={<EsewaRedirect />} />
+                <Route path="withdraw-funds" element={<WithdrawFunds />} />
+                <Route path="balance-statement" element={<BalanceStatement />} />
+                <Route path="transaction-history" element={<TransactionHistory />} />
+                <Route path="profile" element={<Profile />} />
+                <Route path="payment-methods" element={<PaymentMethods />} />
+                <Route path="settings" element={<Settings />} />
 
             </Route>
-            
+
             <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>
     );
 }
 
 export default function App() {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
-  );
+    return (
+        <BrowserRouter>
+            <AuthProvider>
+                <AppRoutes />
+            </AuthProvider>
+        </BrowserRouter>
+    );
 }

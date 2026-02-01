@@ -17,6 +17,7 @@ const WithdrawFunds = () => {
     const [amount, setAmount] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [open, setOpen] = useState(false);
+    const [selectedMethodId, setSelectedMethodId] = useState<string>('');
 
     useEffect(() => {
         loadData();
@@ -26,10 +27,14 @@ const WithdrawFunds = () => {
         try {
             const [balanceRes, methodsRes] = await Promise.all([
                 client.get('/wallet/balance'),
-                client.get('/withdrawal-requests/methods')
+                client.get('/payout-methods')
             ]);
             setBalance(balanceRes.data.data?.balance || balanceRes.data?.balance || 0);
-            setPayoutMethods(methodsRes.data.data || methodsRes.data || []);
+            const methods = methodsRes.data.data || methodsRes.data || [];
+            setPayoutMethods(methods);
+            if (methods.length > 0 && !selectedMethodId) {
+                setSelectedMethodId(methods[0].id);
+            }
         } catch (error) {
             console.error('Failed to load wallet data:', error);
             toast.error('Failed to load wallet data');
@@ -56,7 +61,10 @@ const WithdrawFunds = () => {
 
         try {
             setSubmitting(true);
-            await client.post('/withdrawal-requests', { amount: val });
+            await client.post('/withdrawal-requests', {
+                amount: val,
+                payoutMethodId: selectedMethodId
+            });
             toast.success('Withdrawal request sent to admin');
             setOpen(false);
             setAmount('');
@@ -98,22 +106,42 @@ const WithdrawFunds = () => {
                                     Request Withdrawal
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent>
+                            <DialogContent className="max-w-md">
                                 <DialogHeader>
                                     <DialogTitle>Request Withdrawal</DialogTitle>
                                 </DialogHeader>
                                 <form onSubmit={handleWithdraw} className="space-y-4 mt-4">
-                                    <div className="p-4 bg-background rounded-lg border border-border">
-                                        <div className="text-sm font-medium mb-2">Payout Method</div>
+                                    <div className="space-y-3">
+                                        <div className="text-sm font-medium">Select Payout Method</div>
                                         {payoutMethods.length > 0 ? (
-                                            <div className="flex items-center gap-2 text-sm text-text">
-                                                <CreditCard size={16} className="text-primary" />
-                                                <span>Using default: {payoutMethods[0].details?.bankName || payoutMethods[0].details?.walletId || 'Method'}</span>
+                                            <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                                                {payoutMethods.map((method) => (
+                                                    <div
+                                                        key={method.id}
+                                                        className={`
+                                                            flex items-center p-3 rounded-lg border cursor-pointer transition-all
+                                                            ${selectedMethodId === method.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:border-primary/50'}
+                                                        `}
+                                                        onClick={() => setSelectedMethodId(method.id)}
+                                                    >
+                                                        <div className={`w-4 h-4 rounded-full border mr-3 flex items-center justify-center ${selectedMethodId === method.id ? 'border-primary' : 'border-textMuted'}`}>
+                                                            {selectedMethodId === method.id && <div className="w-2 h-2 rounded-full bg-primary" />}
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="text-sm font-medium">{method.type}</div>
+                                                            <div className="text-xs text-textMuted">
+                                                                {method.type === 'BANK'
+                                                                    ? `${method.details.bankName} - ${method.details.accountNumber}`
+                                                                    : `${method.details.mobileNumber}`}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
                                         ) : (
-                                            <div className="text-sm text-red-500 flex items-center gap-2">
+                                            <div className="text-sm text-red-500 flex items-center gap-2 p-3 bg-red-500/10 rounded-md">
                                                 <Info size={16} />
-                                                No payment methods found. Please add one.
+                                                No payment methods found. Please add one first.
                                             </div>
                                         )}
                                     </div>

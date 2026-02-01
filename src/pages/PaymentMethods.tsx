@@ -16,6 +16,8 @@ const PaymentMethods = () => {
     const [submitting, setSubmitting] = useState(false);
     const [open, setOpen] = useState(false);
 
+    const [qrFile, setQrFile] = useState<File | null>(null);
+
     // Form State
     const [type, setType] = useState('BANK');
     const [details, setDetails] = useState<any>({});
@@ -26,8 +28,8 @@ const PaymentMethods = () => {
 
     const loadMethods = async () => {
         try {
-            const res = await client.get('/withdrawal/methods');
-            setMethods(res.data);
+            const res = await client.get('/payout-methods');
+            setMethods(res.data.data || []);
         } catch (error) {
             console.error('Failed to load methods:', error);
             toast.error('Failed to load payment methods');
@@ -41,7 +43,7 @@ const PaymentMethods = () => {
         if (!confirm('Are you sure you want to delete this payment method?')) return;
 
         try {
-            await client.delete(`/withdrawal/methods/${id}`);
+            await client.delete(`/payout-methods/${id}`);
             toast.success('Payment method removed');
             loadMethods();
         } catch (error) {
@@ -54,14 +56,26 @@ const PaymentMethods = () => {
         e.preventDefault();
         try {
             setSubmitting(true);
-            await client.post('/withdrawal/methods', {
-                type,
-                details,
-                isDefault: methods.length === 0, // First one is default
+
+            const formData = new FormData();
+            formData.append('type', type);
+            formData.append('details', JSON.stringify(details));
+            formData.append('isDefault', String(methods.length === 0));
+
+            if (qrFile) {
+                formData.append('qrCode', qrFile);
+            }
+
+            await client.post('/payout-methods', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
             });
+
             toast.success('Payment method added successfully');
             setOpen(false);
             setDetails({});
+            setQrFile(null);
             loadMethods();
         } catch (error) {
             console.error('Failed to add method:', error);
@@ -78,8 +92,8 @@ const PaymentMethods = () => {
                     <>
                         <div className="space-y-2">
                             <Label>Bank Name</Label>
-                            <Input 
-                                placeholder="e.g. Nabil Bank" 
+                            <Input
+                                placeholder="e.g. Nabil Bank"
                                 value={details.bankName || ''}
                                 onChange={(e) => setDetails({ ...details, bankName: e.target.value })}
                                 required
@@ -87,8 +101,8 @@ const PaymentMethods = () => {
                         </div>
                         <div className="space-y-2">
                             <Label>Account Name</Label>
-                            <Input 
-                                placeholder="Account Holder Name" 
+                            <Input
+                                placeholder="Account Holder Name"
                                 value={details.accountName || ''}
                                 onChange={(e) => setDetails({ ...details, accountName: e.target.value })}
                                 required
@@ -96,8 +110,8 @@ const PaymentMethods = () => {
                         </div>
                         <div className="space-y-2">
                             <Label>Account Number</Label>
-                            <Input 
-                                placeholder="Account Number" 
+                            <Input
+                                placeholder="Account Number"
                                 value={details.accountNumber || ''}
                                 onChange={(e) => setDetails({ ...details, accountNumber: e.target.value })}
                                 required
@@ -105,8 +119,8 @@ const PaymentMethods = () => {
                         </div>
                         <div className="space-y-2">
                             <Label>Branch</Label>
-                            <Input 
-                                placeholder="Branch Name" 
+                            <Input
+                                placeholder="Branch Name"
                                 value={details.branch || ''}
                                 onChange={(e) => setDetails({ ...details, branch: e.target.value })}
                                 required
@@ -120,11 +134,23 @@ const PaymentMethods = () => {
                     <>
                         <div className="space-y-2">
                             <Label>{type === 'ESEWA' ? 'eSewa ID' : 'Khalti ID'} (Mobile Number)</Label>
-                            <Input 
-                                placeholder="98XXXXXXXX" 
+                            <Input
+                                placeholder="98XXXXXXXX"
                                 value={details.mobileNumber || ''}
                                 onChange={(e) => setDetails({ ...details, mobileNumber: e.target.value })}
                                 required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Upload QR Code (Optional)</Label>
+                            <Input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    if (e.target.files && e.target.files[0]) {
+                                        setQrFile(e.target.files[0]);
+                                    }
+                                }}
                             />
                         </div>
                     </>
@@ -136,8 +162,8 @@ const PaymentMethods = () => {
 
     return (
         <div className="max-w-4xl mx-auto">
-            <Button 
-                variant="ghost" 
+            <Button
+                variant="ghost"
                 onClick={() => navigate('/wallet')}
                 className="mb-4 pl-0 hover:pl-2 transition-all"
             >
@@ -151,7 +177,7 @@ const PaymentMethods = () => {
                     description="Manage your withdrawal destinations"
                     icon={<CreditCard size={24} className="text-primary" />}
                 />
-                
+
                 <Dialog open={open} onOpenChange={setOpen}>
                     <DialogTrigger asChild>
                         <Button>
@@ -166,7 +192,7 @@ const PaymentMethods = () => {
                         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                             <div className="space-y-2">
                                 <Label>Method Type</Label>
-                                <select 
+                                <select
                                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                     value={type}
                                     onChange={(e) => {
@@ -204,9 +230,9 @@ const PaymentMethods = () => {
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className={`w-12 h-12 rounded-full flex items-center justify-center
-                                        ${method.type === 'BANK' ? 'bg-blue-500/10 text-blue-500' : 
-                                          method.type === 'ESEWA' ? 'bg-green-500/10 text-green-500' : 
-                                          'bg-purple-500/10 text-purple-500'}`}>
+                                        ${method.type === 'BANK' ? 'bg-blue-500/10 text-blue-500' :
+                                            method.type === 'ESEWA' ? 'bg-green-500/10 text-green-500' :
+                                                'bg-purple-500/10 text-purple-500'}`}>
                                         <CreditCard size={24} />
                                     </div>
                                     <div>
@@ -219,8 +245,8 @@ const PaymentMethods = () => {
                                         )}
                                     </div>
                                 </div>
-                                <Button 
-                                    variant="ghost" 
+                                <Button
+                                    variant="ghost"
                                     size="icon"
                                     className="text-red-400 hover:text-red-500 hover:bg-red-500/10"
                                     onClick={(e) => handleDelete(method.id, e)}

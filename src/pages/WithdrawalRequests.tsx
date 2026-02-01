@@ -1,4 +1,4 @@
-import { Check, DollarSign, X } from 'lucide-react';
+import { Check, DollarSign, X, Eye, CreditCard } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import client from '../api/client';
 
@@ -17,6 +17,10 @@ interface WithdrawalRequest {
         alias: string;
     };
     rejectionReason?: string;
+    payoutDetails?: {
+        type: string;
+        details: any;
+    };
 }
 
 const WithdrawalRequests = () => {
@@ -25,6 +29,8 @@ const WithdrawalRequests = () => {
     const [statusFilter, setStatusFilter] = useState('');
     const [selectedRequest, setSelectedRequest] = useState<WithdrawalRequest | null>(null);
     const [showRejectModal, setShowRejectModal] = useState(false);
+    const [showQrModal, setShowQrModal] = useState(false);
+    const [qrUrl, setQrUrl] = useState('');
     const [rejectionReason, setRejectionReason] = useState('');
     const [pendingCount, setPendingCount] = useState(0);
 
@@ -122,6 +128,7 @@ const WithdrawalRequests = () => {
                         <tr>
                             <th className="p-4">User</th>
                             <th className="p-4">Amount</th>
+                            <th className="p-4">Payout Details</th>
                             <th className="p-4">Status</th>
                             <th className="p-4">Requested</th>
                             <th className="p-4">Reviewed By</th>
@@ -131,13 +138,13 @@ const WithdrawalRequests = () => {
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan={6} className="p-8 text-center text-textMuted">
+                                <td colSpan={7} className="p-8 text-center text-textMuted">
                                     Loading...
                                 </td>
                             </tr>
                         ) : requests.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="p-8 text-center text-textMuted">
+                                <td colSpan={7} className="p-8 text-center text-textMuted">
                                     No withdrawal requests found
                                 </td>
                             </tr>
@@ -157,9 +164,47 @@ const WithdrawalRequests = () => {
                                         </div>
                                     </td>
                                     <td className="p-4">
+                                        {request.payoutDetails ? (
+                                            <div className="text-sm">
+                                                <div className="flex items-center gap-1 font-medium text-text mb-1">
+                                                    <CreditCard size={14} />
+                                                    {request.payoutDetails.type}
+                                                </div>
+                                                <div className="text-xs text-textMuted space-y-0.5">
+                                                    {request.payoutDetails.type === 'BANK' ? (
+                                                        <>
+                                                            <div>{request.payoutDetails.details.bankName}</div>
+                                                            <div>{request.payoutDetails.details.accountName}</div>
+                                                            <div>{request.payoutDetails.details.accountNumber}</div>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <div>ID: {request.payoutDetails.details.mobileNumber}</div>
+                                                            {request.payoutDetails.details.qrCode && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const token = localStorage.getItem('auth_token');
+                                                                        setQrUrl(`${client.defaults.baseURL}/payout-methods/qr/${request.payoutDetails!.details.qrCode}`);
+                                                                        setShowQrModal(true);
+                                                                    }}
+                                                                    className="flex items-center gap-1 text-primary hover:underline mt-1"
+                                                                >
+                                                                    <Eye size={12} />
+                                                                    View QR
+                                                                </button>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <span className="text-textMuted text-sm">-</span>
+                                        )}
+                                    </td>
+                                    <td className="p-4">
                                         <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${request.status === 'PENDING' ? 'bg-yellow-900/50 text-yellow-200' :
-                                                request.status === 'APPROVED' ? 'bg-green-900/50 text-green-200' :
-                                                    'bg-red-900/50 text-red-200'
+                                            request.status === 'APPROVED' ? 'bg-green-900/50 text-green-200' :
+                                                'bg-red-900/50 text-red-200'
                                             }`}>
                                             {request.status}
                                         </span>
@@ -243,6 +288,28 @@ const WithdrawalRequests = () => {
                                 Cancel
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* QR Modal */}
+            {showQrModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setShowQrModal(false)}>
+                    <div className="relative max-w-lg w-full p-4" onClick={e => e.stopPropagation()}>
+                        <button
+                            className="absolute -top-10 right-0 text-white hover:text-gray-300"
+                            onClick={() => setShowQrModal(false)}
+                        >
+                            <X size={24} />
+                        </button>
+                        <img
+                            src={qrUrl}
+                            alt="Payment QR Code"
+                            className="w-full rounded-lg"
+                            onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300?text=Failed+to+load+QR';
+                            }}
+                        />
                     </div>
                 </div>
             )}
