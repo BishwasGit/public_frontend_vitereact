@@ -1,4 +1,4 @@
-import { Check, DollarSign, X, Eye, CreditCard } from 'lucide-react';
+import { Check, CheckCheck, DollarSign, X, Eye, CreditCard } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import client from '../api/client';
 
@@ -64,20 +64,42 @@ const WithdrawalRequests = () => {
         loadPendingCount();
     }, [statusFilter]);
 
-    const handleApprove = async (id: string) => {
-        if (!confirm('Are you sure you want to approve this withdrawal request?')) return;
+    const handleApprove = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!window.confirm('Are you sure you want to approve this withdrawal request? This will deduct the amount from the user\'s wallet.')) return;
 
         try {
+            console.log('Approving request:', id);
             await client.patch(`/withdrawal-requests/${id}/approve`);
             alert('Withdrawal request approved successfully');
             loadRequests();
             loadPendingCount();
         } catch (error: any) {
+            console.error('Approve error:', error);
             alert(error.response?.data?.message || 'Failed to approve request');
         }
     };
 
-    const handleReject = async () => {
+    const handleComplete = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const proof = window.prompt('Enter transaction ID / Payment Proof (optional):', 'Manual Transfer');
+        if (proof === null) return; // Cancelled
+
+        try {
+            console.log('Completing request:', id);
+            await client.patch(`/withdrawal-requests/${id}/complete-payment`, {
+                paymentProof: proof
+            });
+            alert('Withdrawal marked as completed');
+            loadRequests();
+        } catch (error: any) {
+            console.error('Complete error:', error);
+            alert(error.response?.data?.message || 'Failed to complete request');
+        }
+    };
+
+    const handleReject = async (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent row click
         if (!selectedRequest || !rejectionReason.trim()) {
             alert('Please provide a reason for rejection');
             return;
@@ -218,14 +240,15 @@ const WithdrawalRequests = () => {
                                         {request.status === 'PENDING' ? (
                                             <div className="flex gap-2">
                                                 <button
-                                                    onClick={() => handleApprove(request.id)}
+                                                    onClick={(e) => handleApprove(request.id, e)}
                                                     className="rounded bg-green-600 p-2 text-white hover:bg-green-700"
-                                                    title="Approve"
+                                                    title="Approve (Deduct Balance)"
                                                 >
                                                     <Check size={16} />
                                                 </button>
                                                 <button
-                                                    onClick={() => {
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
                                                         setSelectedRequest(request);
                                                         setShowRejectModal(true);
                                                     }}
@@ -235,9 +258,21 @@ const WithdrawalRequests = () => {
                                                     <X size={16} />
                                                 </button>
                                             </div>
+                                        ) : request.status === 'APPROVED' ? (
+                                            <button
+                                                onClick={(e) => handleComplete(request.id, e)}
+                                                className="flex items-center gap-1 rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700"
+                                                title="Mark as Paid"
+                                            >
+                                                <CheckCheck size={14} />
+                                                Mark Paid
+                                            </button>
                                         ) : request.status === 'REJECTED' && request.rejectionReason ? (
                                             <button
-                                                onClick={() => alert(request.rejectionReason)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    alert(request.rejectionReason);
+                                                }}
                                                 className="text-sm text-primary hover:underline"
                                             >
                                                 View Reason
