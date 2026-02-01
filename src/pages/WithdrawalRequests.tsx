@@ -183,7 +183,6 @@ const WithdrawalRequests = () => {
                                                             {request.payoutDetails.details.qrCode && (
                                                                 <button
                                                                     onClick={() => {
-                                                                        // const token = localStorage.getItem('auth_token');
                                                                         setQrUrl(`${client.defaults.baseURL}/payout-methods/qr/${request.payoutDetails!.details.qrCode}`);
                                                                         setShowQrModal(true);
                                                                     }}
