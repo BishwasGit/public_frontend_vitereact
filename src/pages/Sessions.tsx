@@ -1,9 +1,10 @@
 import { useAuth } from '@/auth/useAuth';
 import { EmptyState, LoadingState, PageHeader, StatusBadge } from '@/components/common';
 import SessionReviewModal from '@/components/SessionReviewModal';
+import CreateDisputeModal from '@/components/CreateDisputeModal';
 import { Button } from '@/components/ui/button';
 import { calculateDuration, formatCurrency, formatDate } from '@/utils/helpers';
-import { Calendar, Eye } from 'lucide-react';
+import { AlertTriangle, Calendar, Eye } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -33,6 +34,7 @@ const Sessions = () => {
     const [filter, setFilter] = useState('ALL');
     const [sessionType, setSessionType] = useState<'ALL' | 'ONE_ON_ONE' | 'GROUP'>('ALL');
     const [reviewSession, setReviewSession] = useState<Session | null>(null);
+    const [disputeSession, setDisputeSession] = useState<Session | null>(null);
 
     useEffect(() => {
         loadSessions();
@@ -184,6 +186,18 @@ const Sessions = () => {
                                             >
                                                 <Eye size={14} />
                                             </Button>
+                                            {(user?.role === 'PATIENT' || user?.role === 'PSYCHOLOGIST') &&
+                                                (session.status === 'COMPLETED' || session.status === 'CANCELLED') && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => setDisputeSession(session)}
+                                                        className="ml-2 text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                                                        title="Report an issue"
+                                                    >
+                                                        <AlertTriangle size={14} />
+                                                    </Button>
+                                                )}
                                             {user?.role === 'PATIENT' && session.status === 'COMPLETED' && !session.reviews?.length && (
                                                 <Button
                                                     variant="default"
@@ -210,6 +224,19 @@ const Sessions = () => {
                     open={!!reviewSession}
                     onClose={() => setReviewSession(null)}
                     onSubmit={() => loadSessions()}
+                />
+            )}
+
+            {/* Dispute Modal */}
+            {disputeSession && (
+                <CreateDisputeModal
+                    sessionId={disputeSession.id}
+                    isOpen={!!disputeSession}
+                    onClose={() => setDisputeSession(null)}
+                    onSuccess={() => {
+                        setDisputeSession(null);
+                        toast.success('Dispute submitted successfully');
+                    }}
                 />
             )}
         </div>

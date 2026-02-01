@@ -1,9 +1,11 @@
 import { DollarSign, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import client from '../api/client';
 
 const Financials = () => {
     const [stats, setStats] = useState<any>(null);
+    const [graphData, setGraphData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -12,8 +14,12 @@ const Financials = () => {
 
     const loadFinancials = async () => {
         try {
-            const response = await client.get('/analytics/revenue');
-            setStats(response.data);
+            const [revenueRes, graphRes] = await Promise.all([
+                client.get('/analytics/revenue'),
+                client.get('/analytics/activity-graph?days=30')
+            ]);
+            setStats(revenueRes.data.data);
+            setGraphData(graphRes.data.data);
         } catch (error) {
             console.error('Failed to load financials', error);
         } finally {
@@ -50,7 +56,7 @@ const Financials = () => {
                         <Wallet className="text-blue-500" size={20} />
                     </div>
                     <p className="text-3xl font-bold text-text">${stats?.net || 0}</p>
-                    <p className="text-xs text-textMuted mt-1">After fees</p>
+                    <p className="text-xs text-textMuted mt-1">Provider Earnings</p>
                 </div>
 
                 <div className="bg-surface p-6 rounded-xl border border-border">
@@ -73,12 +79,12 @@ const Financials = () => {
             </div>
 
             {/* Transaction Details */}
-            <div className="bg-surface rounded-xl border border-border p-6">
+            <div className="bg-surface rounded-xl border border-border p-6 mb-8">
                 <h2 className="text-xl font-bold text-text mb-4">Transaction Summary</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <p className="text-textMuted text-sm mb-2">Period</p>
-                        <p className="text-text font-medium">{stats?.period || 'Last Month'}</p>
+                        <p className="text-text font-medium capitalize">{stats?.period || 'Last Month'}</p>
                     </div>
                     <div>
                         <p className="text-textMuted text-sm mb-2">Total Transactions</p>
@@ -87,11 +93,41 @@ const Financials = () => {
                 </div>
             </div>
 
-            {/* Placeholder for charts */}
-            <div className="mt-8 bg-surface rounded-xl border border-border p-6">
-                <h2 className="text-xl font-bold text-text mb-4">Revenue Trends</h2>
-                <div className="h-64 flex items-center justify-center text-textMuted">
-                    <p>Revenue chart coming soon...</p>
+            {/* Revenue Chart */}
+            <div className="bg-surface rounded-xl border border-border p-6">
+                <h2 className="text-xl font-bold text-text mb-4">Revenue Trends (Last 30 Days)</h2>
+                {/* Fixed height container for Recharts */}
+                <div style={{ width: '100%', height: 320 }}>
+                    {graphData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={graphData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                                <XAxis
+                                    dataKey="date"
+                                    stroke="#888"
+                                    fontSize={12}
+                                    tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                />
+                                <YAxis stroke="#888" fontSize={12} />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#1A1A1A', borderColor: '#333' }}
+                                    itemStyle={{ color: '#fff' }}
+                                />
+                                <Line
+                                    type="monotone"
+                                    dataKey="revenue"
+                                    name="Revenue"
+                                    stroke="#10b981"
+                                    strokeWidth={2}
+                                    dot={false}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="h-full flex items-center justify-center text-textMuted">
+                            No chart data available
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -1,61 +1,62 @@
 import { ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-
-interface Dispute {
-    id: string;
-    sessionId: string;
-    reporter: string;
-    reporterEmail: string;
-    against: string;
-    againstEmail: string;
-    reason: string;
-    description: string;
-    status: 'PENDING' | 'RESOLVED' | 'REFUNDED' | 'DISMISSED';
-    amount: number;
-    createdAt: string;
-    sessionDate: string;
-}
-
-// Mock data - in production, fetch from API
-const mockDisputes: Record<string, Dispute> = {
-    '1': {
-        id: '1',
-        sessionId: 'sess_123',
-        reporter: 'Client A',
-        reporterEmail: 'clienta@example.com',
-        against: 'Dr. Freud',
-        againstEmail: 'freud@example.com',
-        reason: 'Provider did not show up',
-        description: 'I scheduled a session for 3:00 PM on December 15th, 2025. I waited for 20 minutes but the psychologist never joined the video call. I tried refreshing the page and checking my internet connection, but the issue persisted. This is very unprofessional and I would like a full refund for this session.',
-        status: 'PENDING',
-        amount: 100,
-        createdAt: '2025-12-15T15:25:00Z',
-        sessionDate: '2025-12-15T15:00:00Z'
-    },
-    '2': {
-        id: '2',
-        sessionId: 'sess_456',
-        reporter: 'Client B',
-        reporterEmail: 'clientb@example.com',
-        against: 'Jung Official',
-        againstEmail: 'jung@example.com',
-        reason: 'Connection issues',
-        description: 'During our session, there were constant connection drops and audio issues. The psychologist kept freezing and I could barely hear them. We tried reconnecting multiple times but the problem continued throughout the entire session. I feel like I didn\'t get the full value of the session due to these technical difficulties.',
-        status: 'RESOLVED',
-        amount: 50,
-        createdAt: '2025-12-14T10:30:00Z',
-        sessionDate: '2025-12-14T10:00:00Z'
-    },
-};
+import client from '../api/client';
 
 const DisputeView = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [dispute, setDispute] = useState<Dispute | null>(
-        id ? mockDisputes[id] : null
-    );
+    const [dispute, setDispute] = useState<any | null>(null);
+    const [loading, setLoading] = useState(true);
     const [settling, setSettling] = useState(false);
+
+    useEffect(() => {
+        loadDispute();
+    }, [id]);
+
+    const loadDispute = async () => {
+        try {
+            const res = await client.get(`/disputes/${id}`);
+            setDispute(res.data.data || res.data);
+        } catch (error) {
+            console.error('Failed to load dispute', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSettle = async (decision: 'REFUND' | 'DISMISS') => {
+        if (!confirm(`Are you sure you want to ${decision.toLowerCase()} this dispute?`)) {
+            return;
+        }
+
+        setSettling(true);
+        try {
+            await client.post(`/disputes/${id}/resolve`, {
+                action: decision,
+                notes: `Resolved via Admin Panel as ${decision}`
+            });
+            alert(`Dispute ${decision.toLowerCase()}ed successfully!`);
+            loadDispute(); // Refresh
+        } catch (error) {
+            console.error('Failed to resolve dispute', error);
+            alert('Failed to resolve dispute');
+        } finally {
+            setSettling(false);
+        }
+    };
+
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    if (loading) return <div className="p-10 text-center text-textMuted">Loading dispute...</div>;
 
     if (!dispute) {
         return (
@@ -72,33 +73,14 @@ const DisputeView = () => {
         );
     }
 
-    const handleSettle = async (decision: 'REFUND' | 'DISMISS') => {
-        if (!confirm(`Are you sure you want to ${decision.toLowerCase()} this dispute?`)) {
-            return;
-        }
+    const reporterName = dispute.reporter?.alias || 'Unknown';
+    const reporterEmail = dispute.reporter?.email || 'N/A';
 
-        setSettling(true);
-
-        // Simulate API call
-        setTimeout(() => {
-            setDispute({
-                ...dispute,
-                status: decision === 'REFUND' ? 'REFUNDED' : 'DISMISSED'
-            });
-            setSettling(false);
-            alert(`Dispute ${decision.toLowerCase()}ed successfully!`);
-        }, 1000);
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
+    // Determine Against
+    const isReporterPatient = dispute.reporterId === dispute.session.patientId;
+    const againstName = isReporterPatient ? dispute.session.psychologist?.alias : dispute.session.patient?.alias;
+    const againstEmail = isReporterPatient ? dispute.session.psychologist?.email : dispute.session.patient?.email;
+    const sessionDate = dispute.session.startTime;
 
     return (
         <div className="max-w-4xl">
@@ -112,11 +94,11 @@ const DisputeView = () => {
                         <ArrowLeft size={20} />
                         Back
                     </button>
-                    <h2 className="text-2xl font-bold text-text">Dispute #{dispute.id}</h2>
+                    <h2 className="text-2xl font-bold text-text">Dispute #{dispute.id.slice(0, 8)}</h2>
                 </div>
                 <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${dispute.status === 'PENDING' ? 'bg-yellow-900/50 text-yellow-200' :
-                        dispute.status === 'REFUNDED' ? 'bg-red-900/50 text-red-200' :
-                            'bg-green-900/50 text-green-200'
+                    dispute.status === 'REFUNDED' ? 'bg-red-900/50 text-red-200' :
+                        'bg-green-900/50 text-green-200'
                     }`}>
                     {dispute.status}
                 </span>
@@ -138,7 +120,7 @@ const DisputeView = () => {
                         </div>
                         <div>
                             <p className="text-sm text-textMuted mb-1">Session Date</p>
-                            <p className="text-text">{formatDate(dispute.sessionDate)}</p>
+                            <p className="text-text">{formatDate(sessionDate)}</p>
                         </div>
                         <div>
                             <p className="text-sm text-textMuted mb-1">Reported On</p>
@@ -152,14 +134,14 @@ const DisputeView = () => {
                     <h3 className="text-lg font-semibold text-text mb-4">Parties Involved</h3>
                     <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <p className="text-sm text-textMuted mb-2">Reporter (Client)</p>
-                            <p className="font-medium text-text">{dispute.reporter}</p>
-                            <p className="text-sm text-textMuted">{dispute.reporterEmail}</p>
+                            <p className="text-sm text-textMuted mb-2">Reporter</p>
+                            <p className="font-medium text-text">{reporterName}</p>
+                            <p className="text-sm text-textMuted">{reporterEmail}</p>
                         </div>
                         <div>
-                            <p className="text-sm text-textMuted mb-2">Against (Psychologist)</p>
-                            <p className="font-medium text-text">{dispute.against}</p>
-                            <p className="text-sm text-textMuted">{dispute.againstEmail}</p>
+                            <p className="text-sm text-textMuted mb-2">Against</p>
+                            <p className="font-medium text-text">{againstName || 'Unknown'}</p>
+                            <p className="text-sm text-textMuted">{againstEmail || 'N/A'}</p>
                         </div>
                     </div>
                 </div>
@@ -214,8 +196,8 @@ const DisputeView = () => {
                 {/* Resolution Info */}
                 {dispute.status !== 'PENDING' && (
                     <div className={`border rounded-xl p-6 ${dispute.status === 'REFUNDED'
-                            ? 'bg-red-900/20 border-red-800'
-                            : 'bg-green-900/20 border-green-800'
+                        ? 'bg-red-900/20 border-red-800'
+                        : 'bg-green-900/20 border-green-800'
                         }`}>
                         <h3 className="text-lg font-semibold text-text mb-2">Resolution</h3>
                         <p className="text-text">
@@ -223,6 +205,12 @@ const DisputeView = () => {
                                 ? 'This dispute was resolved in favor of the client. A full refund has been issued.'
                                 : 'This dispute was dismissed. No refund was issued.'}
                         </p>
+                        {dispute.resolvedAt && (
+                            <p className="text-xs text-textMuted mt-2">
+                                Resolved on {formatDate(dispute.resolvedAt)}
+                                {dispute.resolver && ` by ${dispute.resolver.alias}`}
+                            </p>
+                        )}
                     </div>
                 )}
             </div>

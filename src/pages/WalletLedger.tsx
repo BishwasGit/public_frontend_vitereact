@@ -1,6 +1,8 @@
-import { Download, Search } from 'lucide-react';
-import { useState } from 'react';
+
+import { Download } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import client from '../api/client';
+import UserSearch from '../components/UserSearch';
 
 interface Transaction {
     id: string;
@@ -38,18 +40,24 @@ const WalletLedger = () => {
     const [ledger, setLedger] = useState<WalletLedger | null>(null);
     const [loading, setLoading] = useState(false);
 
-    const loadLedger = async () => {
-        if (!userId.trim()) {
-            alert('Please enter a user ID');
-            return;
+    // Load ledger automatically when userId changes (if valid)
+    useEffect(() => {
+        if (userId) {
+            loadLedger();
+        } else {
+            setLedger(null);
         }
+    }, [userId]);
+
+    const loadLedger = async () => {
+        if (!userId) return;
 
         try {
             setLoading(true);
             const res = await client.get(`/reports/wallet-ledger/${userId}`);
             setLedger(res.data.data || res.data);
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Failed to load wallet ledger');
+            console.error(error);
             setLedger(null);
         } finally {
             setLoading(false);
@@ -83,29 +91,18 @@ const WalletLedger = () => {
         <div>
             <h2 className="mb-6 text-2xl font-bold text-text">Wallet Ledger Report</h2>
 
-            {/* Search */}
-            <div className="mb-6 flex gap-4">
-                <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-textMuted" size={20} />
-                    <input
-                        type="text"
-                        placeholder="Enter user ID..."
-                        value={userId}
-                        onChange={(e) => setUserId(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && loadLedger()}
-                        className="w-full rounded-lg border border-border bg-surface pl-10 pr-4 py-2 text-text placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                </div>
-                <button
-                    onClick={loadLedger}
-                    disabled={loading}
-                    className="rounded-lg bg-primary px-6 py-2 text-white hover:bg-primary/90 disabled:opacity-50"
-                >
-                    {loading ? 'Loading...' : 'Load Ledger'}
-                </button>
+            {/* User Search */}
+            <div className="mb-6 max-w-xl">
+                <label className="mb-2 block text-sm font-medium text-textMuted">Select User</label>
+                <UserSearch
+                    onSelect={(user) => setUserId(user.id)}
+                    placeholder="Search by alias, email, or name..."
+                />
             </div>
 
-            {ledger && (
+            {loading && <div className="text-center py-8 text-textMuted">Loading ledger...</div>}
+
+            {!loading && ledger && (
                 <>
                     {/* User Info & Summary Cards */}
                     <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -169,8 +166,8 @@ const WalletLedger = () => {
                                             </td>
                                             <td className="p-4">
                                                 <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${tx.type === 'DEPOSIT' ? 'bg-green-900/50 text-green-200' :
-                                                        tx.type === 'WITHDRAWAL' ? 'bg-red-900/50 text-red-200' :
-                                                            'bg-blue-900/50 text-blue-200'
+                                                    tx.type === 'WITHDRAWAL' ? 'bg-red-900/50 text-red-200' :
+                                                        'bg-blue-900/50 text-blue-200'
                                                     }`}>
                                                     {tx.type}
                                                 </span>
@@ -184,8 +181,8 @@ const WalletLedger = () => {
                                             <td className="p-4 text-textMuted">{tx.description}</td>
                                             <td className="p-4">
                                                 <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${tx.status === 'COMPLETED' ? 'bg-green-900/50 text-green-200' :
-                                                        tx.status === 'PENDING' ? 'bg-yellow-900/50 text-yellow-200' :
-                                                            'bg-red-900/50 text-red-200'
+                                                    tx.status === 'PENDING' ? 'bg-yellow-900/50 text-yellow-200' :
+                                                        'bg-red-900/50 text-red-200'
                                                     }`}>
                                                     {tx.status}
                                                 </span>

@@ -1,4 +1,4 @@
-import { Download } from 'lucide-react';
+import { Download, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import client from '../api/client';
 
@@ -20,6 +20,7 @@ interface AuditLog {
 
 const AuditLogs = () => {
     const [logs, setLogs] = useState<AuditLog[]>([]);
+    const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
         entity: '',
@@ -27,6 +28,8 @@ const AuditLogs = () => {
         userId: '',
         startDate: '',
         endDate: '',
+        limit: 100,
+        skip: 0
     });
     const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
 
@@ -40,19 +43,27 @@ const AuditLogs = () => {
             if (filters.userId) params.append('userId', filters.userId);
             if (filters.startDate) params.append('startDate', filters.startDate);
             if (filters.endDate) params.append('endDate', filters.endDate);
+            params.append('limit', filters.limit.toString());
+            params.append('skip', filters.skip.toString());
 
             const queryString = params.toString();
             const res = await client.get(`/audit-logs${queryString ? '?' + queryString : ''}`);
             setLogs(res.data.data || []);
+            setTotal(res.data.total || 0);
         } catch (error) {
             console.error('Failed to load audit logs:', error);
+            // Optional: Add toast notification here
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        loadLogs();
+        // Debounce load logs to prevent too many requests when typing user ID
+        const timer = setTimeout(() => {
+            loadLogs();
+        }, 500);
+        return () => clearTimeout(timer);
     }, [filters]);
 
     const handleExportCSV = () => {
@@ -79,7 +90,10 @@ const AuditLogs = () => {
     return (
         <div>
             <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-text">Audit Logs</h2>
+                <div>
+                    <h2 className="text-2xl font-bold text-text">Audit Logs</h2>
+                    <p className="text-sm text-textMuted">Track system activities and changes ({total} total)</p>
+                </div>
                 <button
                     onClick={handleExportCSV}
                     disabled={logs.length === 0}
@@ -92,9 +106,19 @@ const AuditLogs = () => {
 
             {/* Filters */}
             <div className="mb-6 grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-textMuted" />
+                    <input
+                        type="text"
+                        value={filters.userId}
+                        onChange={(e) => setFilters({ ...filters, userId: e.target.value, skip: 0 })}
+                        className="w-full rounded-lg border border-border bg-surface pl-9 pr-4 py-2 text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="Filter by User ID"
+                    />
+                </div>
                 <select
                     value={filters.entity}
-                    onChange={(e) => setFilters({ ...filters, entity: e.target.value })}
+                    onChange={(e) => setFilters({ ...filters, entity: e.target.value, skip: 0 })}
                     className="rounded-lg border border-border bg-surface px-4 py-2 text-text focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                     <option value="">All Entities</option>
@@ -111,7 +135,7 @@ const AuditLogs = () => {
 
                 <select
                     value={filters.action}
-                    onChange={(e) => setFilters({ ...filters, action: e.target.value })}
+                    onChange={(e) => setFilters({ ...filters, action: e.target.value, skip: 0 })}
                     className="rounded-lg border border-border bg-surface px-4 py-2 text-text focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                     <option value="">All Actions</option>
@@ -126,12 +150,14 @@ const AuditLogs = () => {
                     <option value="REJECT">Reject</option>
                     <option value="REFUND">Refund</option>
                     <option value="SETTLE">Settle</option>
+                    <option value="UPLOAD">Upload</option>
+                    <option value="DOWNLOAD">Download</option>
                 </select>
 
                 <input
                     type="date"
                     value={filters.startDate}
-                    onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                    onChange={(e) => setFilters({ ...filters, startDate: e.target.value, skip: 0 })}
                     className="rounded-lg border border-border bg-surface px-4 py-2 text-text focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Start Date"
                 />
@@ -139,17 +165,19 @@ const AuditLogs = () => {
                 <input
                     type="date"
                     value={filters.endDate}
-                    onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                    onChange={(e) => setFilters({ ...filters, endDate: e.target.value, skip: 0 })}
                     className="rounded-lg border border-border bg-surface px-4 py-2 text-text focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="End Date"
                 />
 
-                <button
-                    onClick={() => setFilters({ entity: '', action: '', userId: '', startDate: '', endDate: '' })}
-                    className="rounded-lg border border-border bg-surface px-4 py-2 text-text hover:bg-white/5"
-                >
-                    Clear Filters
-                </button>
+                <div className="md:col-span-5 flex justify-end">
+                    <button
+                        onClick={() => setFilters({ entity: '', action: '', userId: '', startDate: '', endDate: '', limit: 100, skip: 0 })}
+                        className="text-sm text-textMuted hover:text-primary underline"
+                    >
+                        Clear Filters
+                    </button>
+                </div>
             </div>
 
             {/* Audit Logs Table */}
@@ -197,10 +225,10 @@ const AuditLogs = () => {
                                     </td>
                                     <td className="p-4">
                                         <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${log.action === 'CREATE' ? 'bg-green-900/50 text-green-200' :
-                                                log.action === 'UPDATE' ? 'bg-blue-900/50 text-blue-200' :
-                                                    log.action === 'DELETE' ? 'bg-red-900/50 text-red-200' :
-                                                        log.action === 'LOGIN' ? 'bg-purple-900/50 text-purple-200' :
-                                                            'bg-gray-900/50 text-gray-200'
+                                            log.action === 'UPDATE' ? 'bg-blue-900/50 text-blue-200' :
+                                                log.action === 'DELETE' ? 'bg-red-900/50 text-red-200' :
+                                                    log.action === 'LOGIN' ? 'bg-purple-900/50 text-purple-200' :
+                                                        'bg-gray-900/50 text-gray-200'
                                             }`}>
                                             {log.action}
                                         </span>
@@ -211,13 +239,15 @@ const AuditLogs = () => {
                                     </td>
                                     <td className="p-4 text-textMuted">{log.ipAddress || '-'}</td>
                                     <td className="p-4">
-                                        {log.changes && (
+                                        {log.changes || (log as any).details ? (
                                             <button
                                                 onClick={() => setSelectedLog(log)}
                                                 className="text-primary hover:underline"
                                             >
-                                                View Changes
+                                                View
                                             </button>
+                                        ) : (
+                                            <span className="text-textMuted">-</span>
                                         )}
                                     </td>
                                 </tr>
@@ -225,6 +255,28 @@ const AuditLogs = () => {
                         )}
                     </tbody>
                 </table>
+                {/* Simple Pagination */}
+                <div className="p-4 border-t border-border flex items-center justify-between">
+                    <span className="text-sm text-textMuted">
+                        Showing {logs.length} of {total} results
+                    </span>
+                    <div className="flex gap-2">
+                        <button
+                            disabled={filters.skip === 0}
+                            onClick={() => setFilters({ ...filters, skip: Math.max(0, filters.skip - filters.limit) })}
+                            className="px-3 py-1 rounded bg-surface border border-border text-sm disabled:opacity-50"
+                        >
+                            Previous
+                        </button>
+                        <button
+                            disabled={filters.skip + logs.length >= total}
+                            onClick={() => setFilters({ ...filters, skip: filters.skip + filters.limit })}
+                            className="px-3 py-1 rounded bg-surface border border-border text-sm disabled:opacity-50"
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* Changes Modal */}
@@ -277,6 +329,14 @@ const AuditLogs = () => {
                                     <pre className="bg-background/50 rounded-lg p-4 text-sm text-text overflow-x-auto border border-border">
                                         {JSON.stringify(selectedLog.changes, null, 2)}
                                     </pre>
+                                </div>
+                            )}
+
+                            {/* Handle details if present (from my debug script) */}
+                            {(selectedLog as any).details && (
+                                <div>
+                                    <p className="text-sm text-textMuted mb-2">Details</p>
+                                    <p className="text-text text-sm">{(selectedLog as any).details}</p>
                                 </div>
                             )}
 
