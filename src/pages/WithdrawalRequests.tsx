@@ -28,6 +28,8 @@ const WithdrawalRequests = () => {
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState('');
     const [selectedRequest, setSelectedRequest] = useState<WithdrawalRequest | null>(null);
+    const [showApproveModal, setShowApproveModal] = useState(false);
+    const [requestToApprove, setRequestToApprove] = useState<string | null>(null);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [showQrModal, setShowQrModal] = useState(false);
     const [qrUrl, setQrUrl] = useState('');
@@ -64,19 +66,28 @@ const WithdrawalRequests = () => {
         loadPendingCount();
     }, [statusFilter]);
 
-    const handleApprove = async (id: string, e: React.MouseEvent) => {
+    const handleApproveClick = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!window.confirm('Are you sure you want to approve this withdrawal request? This will deduct the amount from the user\'s wallet.')) return;
+        setRequestToApprove(id);
+        setShowApproveModal(true);
+    };
+
+    const confirmApprove = async () => {
+        if (!requestToApprove) return;
 
         try {
-            console.log('Approving request:', id);
-            await client.patch(`/withdrawal-requests/${id}/approve`);
-            alert('Withdrawal request approved successfully');
+            console.log('Approving request:', requestToApprove);
+            await client.patch(`/withdrawal-requests/${requestToApprove}/approve`);
+            // alert('Withdrawal request approved successfully'); 
+            // Replace alert with just closing modal and reloading, cleaner UX
+            setShowApproveModal(false);
+            setRequestToApprove(null);
             loadRequests();
             loadPendingCount();
         } catch (error: any) {
             console.error('Approve error:', error);
             alert(error.response?.data?.message || 'Failed to approve request');
+            setShowApproveModal(false); // Close anyway so they can retry
         }
     };
 
@@ -240,11 +251,11 @@ const WithdrawalRequests = () => {
                                         {request.status === 'PENDING' ? (
                                             <div className="flex gap-2">
                                                 <button
-                                                    onClick={(e) => handleApprove(request.id, e)}
-                                                    className="rounded bg-green-600 p-2 text-white hover:bg-green-700"
+                                                    onClick={(e) => handleApproveClick(request.id, e)}
+                                                    className="rounded bg-green-600 p-2 text-white hover:bg-green-700 relative z-10"
                                                     title="Approve (Deduct Balance)"
                                                 >
-                                                    <Check size={16} />
+                                                    <Check size={16} className="pointer-events-none" />
                                                 </button>
                                                 <button
                                                     onClick={(e) => {
@@ -316,6 +327,39 @@ const WithdrawalRequests = () => {
                                     setShowRejectModal(false);
                                     setSelectedRequest(null);
                                     setRejectionReason('');
+                                }}
+                                className="flex-1 rounded-lg border border-border bg-surface px-4 py-2 text-text hover:bg-white/5"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Approve Modal */}
+            {showApproveModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="w-full max-w-md rounded-lg bg-surface p-6 border border-border">
+                        <h3 className="mb-4 text-xl font-bold text-text">Confirm Approval</h3>
+                        <p className="mb-6 text-textMuted">
+                            Are you sure you want to approve this request?
+                            <br />
+                            <span className="text-yellow-500 text-sm mt-2 block">
+                                This will deduct the amount from the user's wallet immediately.
+                            </span>
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={confirmApprove}
+                                className="flex-1 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 font-medium"
+                            >
+                                Confirm Approve
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowApproveModal(false);
+                                    setRequestToApprove(null);
                                 }}
                                 className="flex-1 rounded-lg border border-border bg-surface px-4 py-2 text-text hover:bg-white/5"
                             >
