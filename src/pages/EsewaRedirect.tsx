@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { PageHeader } from '@/components/common';
+
 
 const EsewaRedirect = () => {
     const [searchParams] = useSearchParams();
@@ -47,7 +47,7 @@ const EsewaRedirect = () => {
             </div>
 
             <form ref={formRef} action={actionUrl} method="POST" className="hidden">
-                 {Object.entries(params).map(([key, value]) => (
+                {Object.entries(params).map(([key, value]) => (
                     <input key={key} type="hidden" name={key} value={value} />
                 ))}
             </form>
