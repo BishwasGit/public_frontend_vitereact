@@ -10,6 +10,7 @@ import {
     LogOut,
     Menu,
     Package,
+    Percent,
     Search,
     Settings,
     Star,
@@ -55,6 +56,7 @@ export default function Layout() {
         { label: 'Disputes', path: '/disputes', icon: AlertCircle, roles: ['ADMIN'] },
         { label: 'Sessions', path: '/sessions', icon: Calendar, roles: ['ADMIN'] },
         { label: 'Financials', path: '/financials', icon: DollarSign, roles: ['ADMIN'] },
+        { label: 'Commission Settings', path: '/admin-settings', icon: Percent, roles: ['ADMIN'] },
         { label: 'Profile', path: '/profile', icon: UserCircle, roles: ['ADMIN'] },
         { label: 'Settings', path: '/settings', icon: Settings, roles: ['ADMIN'] },
 

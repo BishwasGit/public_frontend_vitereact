@@ -19,11 +19,16 @@ export default function AdminSettings() {
         try {
             setLoading(true);
             const data = await getSettings();
-            setSettings(data);
-            setCommissionInput(data.commissionPercent.toString());
+            // Handle case where settings don't exist yet - default to 10.0
+            const commission = data?.commissionPercent ?? 10.0;
+            setSettings({ ...data, commissionPercent: commission });
+            setCommissionInput(commission.toString());
         } catch (error) {
             console.error('Failed to fetch settings:', error);
             toast.error('Failed to load settings');
+            // Set defaults on error
+            setSettings({ commissionPercent: 10.0 });
+            setCommissionInput('10.0');
         } finally {
             setLoading(false);
         }
