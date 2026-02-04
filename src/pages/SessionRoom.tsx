@@ -365,7 +365,7 @@ const SessionRoom = () => {
 
         const updateTimer = () => {
             const now = new Date();
-            const end = new Date(session.endTime);
+            const end = new Date(session.endTime as string);
             const diff = end.getTime() - now.getTime();
 
             // Demo Status Update
