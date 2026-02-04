@@ -21,8 +21,8 @@ const Profile = () => {
             <div>
                 <h1 className="text-3xl font-bold text-text">Profile Management</h1>
                 <p className="text-textMuted mt-1">
-                    {isAdmin 
-                        ? 'Manage your admin account details.' 
+                    {isAdmin
+                        ? 'Manage your admin account details.'
                         : 'Manage your personal and professional information.'}
                 </p>
             </div>
@@ -164,7 +164,7 @@ const ProfileImageUpload = () => {
 const PersonalInfo = ({ userRole }: { userRole?: string }) => {
     const isAdmin = userRole === 'ADMIN';
     // Patients and Psychologists have similar personal fields, but Admin is restricted
-    
+
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         alias: '',
@@ -218,14 +218,14 @@ const PersonalInfo = ({ userRole }: { userRole?: string }) => {
                 <User size={20} />
                 <h2 className="text-xl font-bold text-text">Personal Information</h2>
             </div>
-            
+
             <div className="space-y-4">
                 {/* Display Name (All Roles) */}
                 <div>
                     <Label>Display Name</Label>
-                    <Input 
-                        value={formData.alias} 
-                        onChange={e => setFormData({...formData, alias: e.target.value})}
+                    <Input
+                        value={formData.alias}
+                        onChange={e => setFormData({ ...formData, alias: e.target.value })}
                         className="mt-1"
                         placeholder="Your Name"
                     />
@@ -234,9 +234,9 @@ const PersonalInfo = ({ userRole }: { userRole?: string }) => {
                 {/* Email (All Roles) */}
                 <div>
                     <Label>Email</Label>
-                    <Input 
-                        value={formData.email} 
-                        onChange={e => setFormData({...formData, email: e.target.value})}
+                    <Input
+                        value={formData.email}
+                        onChange={e => setFormData({ ...formData, email: e.target.value })}
                         className="mt-1"
                         type="email"
                     />
@@ -248,9 +248,9 @@ const PersonalInfo = ({ userRole }: { userRole?: string }) => {
                         {/* Phone */}
                         <div>
                             <Label>Phone Number</Label>
-                            <Input 
-                                value={formData.phoneNumber} 
-                                onChange={e => setFormData({...formData, phoneNumber: e.target.value})}
+                            <Input
+                                value={formData.phoneNumber}
+                                onChange={e => setFormData({ ...formData, phoneNumber: e.target.value })}
                                 className="mt-1"
                                 type="tel"
                             />
@@ -274,17 +274,17 @@ const PersonalInfo = ({ userRole }: { userRole?: string }) => {
                             </div>
                             <div>
                                 <Label>Date of Birth</Label>
-                                <Input 
-                                    value={formData.dateOfBirth} 
-                                    onChange={e => setFormData({...formData, dateOfBirth: e.target.value})}
+                                <Input
+                                    value={formData.dateOfBirth}
+                                    onChange={e => setFormData({ ...formData, dateOfBirth: e.target.value })}
                                     className="mt-1"
                                     type="date"
                                 />
                             </div>
                         </div>
 
-                         {/* Sexual Orientation (Patients & Psychologists) */}
-                         <div>
+                        {/* Sexual Orientation (Patients & Psychologists) */}
+                        <div>
                             <Label>Sexual Orientation</Label>
                             <select
                                 value={formData.sexualOrientation}
@@ -329,6 +329,7 @@ const ProfessionalInfo = () => {
         specialties: '',
         languages: '',
         hourlyRate: '',
+        demoMinutes: '',
         isProfileVisible: false,
     });
 
@@ -344,6 +345,7 @@ const ProfessionalInfo = () => {
                 specialties: Array.isArray(data.specialties) ? data.specialties.join(', ') : (data.specialties || ''),
                 languages: Array.isArray(data.languages) ? data.languages.join(', ') : (data.languages || ''),
                 hourlyRate: data.hourlyRate?.toString() || '',
+                demoMinutes: data.demoMinutes?.toString() || '',
                 isProfileVisible: data.isProfileVisible || false,
             });
         } catch (error) {
@@ -358,6 +360,7 @@ const ProfessionalInfo = () => {
                 specialties: formData.specialties.split(',').map(s => s.trim()).filter(Boolean),
                 languages: formData.languages.split(',').map(l => l.trim()).filter(Boolean),
                 hourlyRate: formData.hourlyRate ? parseFloat(formData.hourlyRate) : null,
+                demoMinutes: formData.demoMinutes ? parseFloat(formData.demoMinutes) : 0,
                 isProfileVisible: formData.isProfileVisible,
             });
             toast.success('Professional info updated');
@@ -391,16 +394,31 @@ const ProfessionalInfo = () => {
                     </label>
                 </div>
 
-                <div>
-                    <Label>Hourly Rate ($)</Label>
-                    <Input
-                        type="number"
-                        value={formData.hourlyRate}
-                        onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
-                        placeholder="e.g. 100"
-                        className="mt-2"
-                    />
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <Label>Hourly Rate ($)</Label>
+                        <Input
+                            type="number"
+                            value={formData.hourlyRate}
+                            onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
+                            placeholder="e.g. 100"
+                            className="mt-2"
+                        />
+                    </div>
+                    <div>
+                        <Label>Demo Minutes (Free)</Label>
+                        <Input
+                            type="number"
+                            value={formData.demoMinutes}
+                            onChange={(e) => setFormData({ ...formData, demoMinutes: e.target.value })}
+                            placeholder="e.g. 15"
+                            className="mt-2"
+                        />
+                    </div>
                 </div>
+                <p className="text-xs text-textMuted -mt-2">
+                    Set demo minutes to 0 to disable free trials. Demo minutes are applied once per patient.
+                </p>
 
                 <div>
                     <Label>Specialties (comma separated)</Label>

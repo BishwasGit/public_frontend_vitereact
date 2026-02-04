@@ -47,10 +47,12 @@ const BookSession = () => {
     });
 
     const [wallet, setWallet] = useState({ balance: 0 });
+    const [demoInfo, setDemoInfo] = useState<{ remaining: number } | null>(null);
 
     useEffect(() => {
         if (id) {
             loadData();
+            loadDemoInfo();
         }
     }, [id, serviceId]);
 
@@ -69,6 +71,16 @@ const BookSession = () => {
         }
     }, [user]);
 
+    const loadDemoInfo = async () => {
+        try {
+            const res = await client.get(`/demo-minutes/psychologist/${id}`);
+            const data = res.data.data || res.data;
+            setDemoInfo(data);
+        } catch (error) {
+            console.error('Failed to load demo info:', error);
+        }
+    };
+
     const loadData = async () => {
         try {
             setLoading(true);
@@ -79,7 +91,7 @@ const BookSession = () => {
             // Calculate price - handle null/undefined duration
             const duration = data.duration || 60; // Default to 60 minutes if not set
             const durationHours = duration / 60;
-            
+
             if (data.pricingModel === 'PER_MINUTE') {
                 setCalculatedPrice(data.pricePerMinute * duration);
             } else if (data.pricingModel === 'FIXED_SESSION') {
@@ -115,6 +127,22 @@ const BookSession = () => {
             return psychologist.hourlyRate * hours;
         }
         return calculatedPrice;
+    };
+
+    // Calculate discounted price for display
+    const calculateDiscountedPrice = () => {
+        const fullPrice = calculatePrice();
+        if (!demoInfo?.remaining || !formData.duration || !psychologist?.hourlyRate) return fullPrice;
+
+        const duration = parseInt(formData.duration);
+        const demoApplicable = Math.min(demoInfo.remaining, duration);
+
+        // If fixed price service, difficult to calculate per-minute discount accurately without rate
+        // Assuming hourlyRate is the base for calculation if available
+        const ratePerMinute = psychologist.hourlyRate / 60;
+        const discount = demoApplicable * ratePerMinute;
+
+        return Math.max(0, fullPrice - discount);
     };
 
     const handleBooking = async () => {
@@ -166,6 +194,8 @@ const BookSession = () => {
     }
 
     const price = calculatePrice();
+    const discountedPrice = calculateDiscountedPrice();
+    const hasDiscount = discountedPrice < price && (demoInfo?.remaining || 0) > 0;
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -294,11 +324,31 @@ const BookSession = () => {
                                         </div>
                                     </>
                                 )}
+
+                                {hasDiscount && (
+                                    <div className="flex justify-between text-green-500">
+                                        <span className="flex items-center gap-1">
+                                            <span>Demo Discount</span>
+                                            <span className="text-xs bg-green-500/10 px-1.5 py-0.5 rounded">
+                                                -{Math.min(demoInfo?.remaining || 0, parseInt(formData.duration))}m
+                                            </span>
+                                        </span>
+                                        <span>-${(price - discountedPrice).toFixed(2)}</span>
+                                    </div>
+                                )}
+
                                 <div className="border-t border-border pt-2 mt-2">
                                     <div className="flex justify-between font-bold text-lg">
-                                        <span className="text-text">Total</span>
-                                        <span className="text-green-400">${price.toFixed(2)}</span>
+                                        <span className="text-text">Total Estimated</span>
+                                        <span className={hasDiscount ? 'text-green-500' : 'text-text'}>
+                                            ${discountedPrice.toFixed(2)}
+                                        </span>
                                     </div>
+                                    {hasDiscount && (
+                                        <p className="text-xs text-textMuted mt-1 text-right">
+                                            *Full amount (${price.toFixed(2)}) reserved until session ends.
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>

@@ -29,6 +29,8 @@ interface SessionInfo {
     psychologistId: string;
     patientId: string;
     status: string;
+    endTime?: string;
+    startTime?: string;
     psychologist: {
         alias: string;
     };
@@ -335,6 +337,64 @@ const SessionRoom = () => {
         ? (session?.participants?.length ? 'Group' : session?.patient?.alias)
         : session?.psychologist.alias;
 
+    // Timer Logic
+    const [timeLeft, setTimeLeft] = useState<string>('');
+    const [isUrgent, setIsUrgent] = useState(false);
+    const [demoState, setDemoState] = useState<{ active: boolean; remaining: number }>({ active: false, remaining: 0 });
+
+    // Fetch demo info
+    useEffect(() => {
+        const fetchDemoInfo = async () => {
+            if (!session?.psychologistId || !user) return;
+            try {
+                // If patient, check their remaining demo
+                if (user.role === 'PATIENT') {
+                    const res = await client.get(`/demo-minutes/psychologist/${session.psychologistId}`);
+                    const remaining = res.data.data?.remaining || res.data.remaining || 0;
+                    setDemoState(prev => ({ ...prev, remaining }));
+                }
+            } catch (error) {
+                console.error('Failed to fetch demo info', error);
+            }
+        };
+        fetchDemoInfo();
+    }, [session?.psychologistId, user]);
+
+    useEffect(() => {
+        if (!session?.endTime) return;
+
+        const updateTimer = () => {
+            const now = new Date();
+            const end = new Date(session.endTime);
+            const diff = end.getTime() - now.getTime();
+
+            // Demo Status Update
+            if (session.startTime && demoState.remaining > 0) {
+                const start = new Date(session.startTime as string).getTime();
+                const elapsedMinutes = (now.getTime() - start) / 60000;
+                const isDemo = elapsedMinutes < demoState.remaining;
+                setDemoState(prev => ({ ...prev, active: isDemo }));
+            }
+
+            if (diff <= 0) {
+                setTimeLeft('00:00');
+                setIsUrgent(true);
+                return;
+            }
+
+            const minutes = Math.floor(diff / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+
+            setTimeLeft(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+            setIsUrgent(minutes < 5); // Urgent if less than 5 minutes
+        };
+
+        updateTimer(); // Initial call
+        const interval = setInterval(updateTimer, 1000);
+
+        return () => clearInterval(interval);
+    }, [session?.endTime, session?.startTime, demoState.remaining]);
+
     return (
         <div className="h-screen flex flex-col bg-background">
             {/* Header */}
@@ -353,6 +413,28 @@ const SessionRoom = () => {
                                     : 'Waiting for participant...'}
                         </p>
                     </div>
+                </div>
+
+                {/* Center: Status & Timer */}
+                <div className="flex items-center gap-3">
+                    {demoState.active && (
+                        <div className="bg-green-500/10 text-green-500 px-3 py-1.5 rounded-full text-sm font-semibold border border-green-500/20 flex items-center gap-2">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                            </span>
+                            Free Demo Active
+                        </div>
+                    )}
+
+                    {timeLeft && (
+                        <div className={`px-4 py-1.5 rounded-full font-mono text-lg font-bold border ${isUrgent
+                            ? 'bg-red-500/10 text-red-500 border-red-500/20 animate-pulse'
+                            : 'bg-primary/10 text-primary border-primary/20'
+                            }`}>
+                            {timeLeft}
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-2">

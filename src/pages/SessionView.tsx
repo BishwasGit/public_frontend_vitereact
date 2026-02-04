@@ -7,6 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import Swal from 'sweetalert2';
 import client from '../api/client';
+import { BillingDetails } from '@/components/BillingDetails';
 
 interface SessionDetail {
     id: string;
@@ -63,7 +64,7 @@ const SessionView = () => {
 
     // Patient can join if session is LIVE or SCHEDULED (for group sessions where they're a participant)
     const patientCanJoin = isPatient && (
-        isSessionLive || 
+        isSessionLive ||
         (session?.status === 'SCHEDULED' && session?.type === 'GROUP')
     );
 
@@ -92,7 +93,7 @@ const SessionView = () => {
             const res = await client.get(`/sessions/${sessionId}`);
             const data = res.data.data || res.data;
             setSession(data);
-            
+
             // Debug logging
             console.log('=== SESSION VIEW DEBUG ===');
             console.log('Session loaded:', data);
@@ -457,10 +458,15 @@ const SessionView = () => {
                             <div className="flex items-start gap-3">
                                 <DollarSign className="text-primary mt-1" size={20} />
                                 <div>
-                                    <p className="text-sm text-textMuted mb-1">Price</p>
-                                    <p className="text-text font-medium text-green-400">
-                                        {typeof session.price === 'number' ? `$${session.price.toFixed(2)}` : <span className="italic text-textMuted">N/A</span>}
-                                    </p>
+                                    <p className="text-sm text-textMuted mb-1">Billing Breakdown</p>
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between gap-4 text-sm">
+                                            <span>Base Price:</span>
+                                            <span className="text-text">${session.price?.toFixed(2) || '0.00'}</span>
+                                        </div>
+                                        {/* Fetch transaction details dynamically */}
+                                        <BillingDetails sessionId={session.id} basePrice={session.price || 0} />
+                                    </div>
                                 </div>
                             </div>
                         </div>
