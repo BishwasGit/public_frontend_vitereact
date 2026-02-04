@@ -23,6 +23,7 @@ import UserBreakdown from './pages/UserBreakdown';
 import Users from './pages/Users';
 import WalletLedger from './pages/WalletLedger';
 import WithdrawalRequests from './pages/WithdrawalRequests';
+import AdminSettings from './pages/admin/AdminSettings';
 
 // Patient Pages
 import FindPsychologist from './pages/FindPsychologist';
@@ -115,6 +116,7 @@ function AppRoutes() {
                 <Route path="disputes/:id" element={<DisputeView />} />
                 <Route path="financials" element={<Financials />} />
                 <Route path="user-breakdown" element={<UserBreakdown />} />
+                <Route path="admin-settings" element={<AdminSettings />} />
 
                 {/* Patient Routes */}
                 <Route path="find-psychologist" element={<FindPsychologist />} />
