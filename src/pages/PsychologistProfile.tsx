@@ -15,6 +15,7 @@ interface Service {
     price: number;
     duration: number;
     isEnabled: boolean;
+    billingType: 'PER_SESSION' | 'PER_MINUTE' | 'BUNDLE_7_DAY';
 }
 
 interface Review {
@@ -208,8 +209,8 @@ const PsychologistProfile = () => {
                     <div className="flex-shrink-0">
                         <div className="w-32 h-32 rounded-full bg-primary/20 flex items-center justify-center relative overflow-hidden">
                             {psychologist.profileImage ? (
-                                <img 
-                                    src={getMediaUrl(psychologist.profileImage)} 
+                                <img
+                                    src={getMediaUrl(psychologist.profileImage)}
                                     alt={psychologist.alias}
                                     className="w-full h-full object-cover"
                                 />
@@ -336,6 +337,9 @@ const PsychologistProfile = () => {
                                     </div>
                                     <div className="text-xl font-bold text-green-400">
                                         ${service.price}
+                                        <span className="text-sm font-normal text-textMuted ml-1">
+                                            {service.billingType === 'PER_MINUTE' ? '/ min' : '/ session'}
+                                        </span>
                                     </div>
                                 </div>
                                 {user?.role === 'PATIENT' && (
@@ -368,16 +372,14 @@ const PsychologistProfile = () => {
                                         <img
                                             src={getMediaUrl(item.filename)}
                                             alt={item.folder}
-                                            className={`w-full h-full object-cover transition-all ${
-                                                item.isLocked && !item.isUnlockedByViewer ? 'blur-lg' : ''
-                                            }`}
+                                            className={`w-full h-full object-cover transition-all ${item.isLocked && !item.isUnlockedByViewer ? 'blur-lg' : ''
+                                                }`}
                                         />
                                     ) : (
                                         <video
                                             src={getMediaUrl(item.filename)}
-                                            className={`w-full h-full object-cover ${
-                                                item.isLocked && !item.isUnlockedByViewer ? 'blur-lg' : ''
-                                            }`}
+                                            className={`w-full h-full object-cover ${item.isLocked && !item.isUnlockedByViewer ? 'blur-lg' : ''
+                                                }`}
                                             controls={!item.isLocked || item.isUnlockedByViewer}
                                         />
                                     )}

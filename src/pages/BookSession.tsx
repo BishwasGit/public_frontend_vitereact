@@ -14,6 +14,7 @@ interface Service {
     description: string;
     price: number;
     duration: number;
+    billingType?: 'PER_SESSION' | 'PER_MINUTE' | 'BUNDLE_7_DAY';
 }
 
 interface Psychologist {
@@ -120,6 +121,9 @@ const BookSession = () => {
 
     const calculatePrice = () => {
         if (service) {
+            if (service.billingType === 'PER_MINUTE') {
+                return service.price * service.duration;
+            }
             return service.price;
         }
         if (psychologist?.hourlyRate) {
@@ -308,9 +312,25 @@ const BookSession = () => {
                             <h3 className="font-semibold text-text mb-3">Price Summary</h3>
                             <div className="space-y-2 text-sm">
                                 {service ? (
-                                    <div className="flex justify-between">
-                                        <span className="text-textMuted">Service</span>
-                                        <span className="text-text">${service.price}</span>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <span className="text-textMuted block">Service</span>
+                                            {service.billingType === 'PER_MINUTE' && (
+                                                <span className="text-xs text-textMuted">
+                                                    (${service.price}/min × {service.duration}m)
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-text block">
+                                                ${service.billingType === 'PER_MINUTE'
+                                                    ? (service.price * service.duration).toFixed(2)
+                                                    : service.price}
+                                            </span>
+                                            <span className="text-xs text-textMuted">
+                                                {service.billingType === 'PER_MINUTE' ? 'Per Minute' : 'Fixed Price'}
+                                            </span>
+                                        </div>
                                     </div>
                                 ) : (
                                     <>
